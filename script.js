@@ -11,6 +11,10 @@ const nextBtn = document.getElementById('nextBtn');
 const pageIndicator = document.getElementById('pageIndicator');
 const apiKey = 'CG-HWqte9JdwYDE4yMCvUAMQyxP';
 
+const modal = document.getElementById('coinModal');
+const modalBody = document.getElementById('modalBody');
+const closeBtn = document.querySelector('.close-btn');
+
 async function fetchCoins(page = 1) {
     try {
         // Memanggil key dari file config
@@ -29,7 +33,9 @@ async function fetchCoins(page = 1) {
         }
 
         const data = await response.json();
+        coinsData = data;
         renderCoins(data);
+        updatePaginationUI(data,page);
     } catch (error) {
         console.error("Audit Fail:", error.message);
     }
@@ -65,6 +71,7 @@ function renderCoins(data){
         const card = document.createElement('div');
         card.className = 'coin-card';
         
+        card.setAttribute('data-id', coin.id);
         // Menggunakan textContent untuk keamanan (mencegah XSS)
         card.innerHTML = `
             <div class="coin-header">
@@ -88,5 +95,41 @@ searchInput.addEventListener('input', (e)=>{
     );
     renderCoins(filtered);
 })
+
+function showCoinDetail(coinId){
+    // cari data koin dari array coinsData
+    const coin = coinsData.find(c => c.id === coinId);
+
+    if (!coin) return;
+
+    // masukkin ke modalBody
+    modalBody.innerHTML = `
+    <div class="modal-header">
+        <img src="${coin.image}" alt="coin-picture">
+        <h2>${coin.name} (${coin.symbol.toUpperCase()})</h2>
+    </div>
+    <hr>
+    <p>Current Price: $${coin.current_price.toLocaleString()}</p>
+        <p>Market Cap: $${coin.market_cap.toLocaleString()}</p>
+        <p>24h High: $${coin.high_24h.toLocaleString()}</p>
+        <p>24h Low: $${coin.low_24h.toLocaleString()}</p>
+        <p>Total Volume: ${coin.total_volume.toLocaleString()}</p>
+    `;
+
+    modal.classList.remove('hidden');
+}
+
+// trigger coinModal
+coinContainer.addEventListener('click', (e)=> {
+    const card = e.target.closest('.coin-card');
+    if (card){
+        // ambil id coin
+        const coinId = card.getAttribute('data-id');
+        showCoinDetail(coinId);
+    }
+});
+
+// tutup modal 
+closeBtn.onclick = () => modal.classList.add('hidden');
 
 fetchCoins(currentPage);
